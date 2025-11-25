@@ -1,10 +1,10 @@
 from sqlalchemy import text
-from bd.Conection import Conection
+from bd.Connection import Connection
 
 class ProcessCristaleria:
 
     def __init__(self):
-        self.con = Conection.getConnection()
+        self.con = Connection().getConnection()
 
  
     def createCristaleria(self, data):
@@ -37,16 +37,9 @@ class ProcessCristaleria:
 
         with self.con.connect() as conn:
             result = conn.execute(text(query))
-            row = result.fetchone()
-
-            while row:
-                item = {}
-
-                for col in row.keys():
-                    item[col] = getattr(row, col)
-
-                cristaleria.append(item)
-                row = result.fetchone()
+            
+            for row in result:
+                cristaleria.append(dict(row._mapping))
 
         return cristaleria
 

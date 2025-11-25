@@ -1,10 +1,10 @@
 from sqlalchemy import text
-from bd.Conection import Conection
+from bd.Connection import Connection
 
 class ProcessReserva:
 
     def __init__(self):
-        self.con = Conection.getConnection()
+        self.con = Connection().getConnection()
 
     def createReserva(self, data):
         query = """
@@ -35,14 +35,9 @@ class ProcessReserva:
 
         with self.con.connect() as conn:
             result = conn.execute(text(query))
-            row = result.fetchone()
-
-            while row:
-                item = {}
-                for col in row.keys():
-                    item[col] = getattr(row, col)
-                reservas.append(item)
-                row = result.fetchone()
+            
+            for row in result:
+                reservas.append(dict(row._mapping))
 
         return reservas
 

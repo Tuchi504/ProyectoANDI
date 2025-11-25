@@ -1,14 +1,14 @@
 from sqlalchemy import create_engine
 import sqlalchemy
 
-class Conection:
+class Connection:
     def __init__(self):
   
         self.user = "sa"
-        self.password = ""
-        self.server = ""
+        self.password = "1234"
+        self.server = "localhost"
         self.driver = "ODBC+Driver+17+for+SQL+Server"
-        self.database = ""
+        self.database = "lab_inventory"
 
     def getConnection(self):
 
@@ -21,6 +21,7 @@ class Conection:
             )
 
             engine = create_engine(connection_str)
+            #print(engine)
             return engine
 
         except Exception as e:

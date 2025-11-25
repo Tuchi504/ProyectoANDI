@@ -1,11 +1,10 @@
 from sqlalchemy import text
-from bd.Conection import Conection
+from bd.Connection import Connection
 
 class ProcessReactivo:
 
     def __init__(self):
-        self.con = Conection.getConnection()
-
+        self.con = Connection().getConnection()
 
     def createReactivo(self, data):
         query = """

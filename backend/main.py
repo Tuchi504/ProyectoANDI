@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import routes_user,routes_cristaleria,routes_data,routes_reactivo
+from api import routes_user, routes_cristaleria, routes_data, routes_reactivo, routes_reserva
 
 
 app = FastAPI()
 
 # Routers
 app.include_router(routes_user.router, prefix="/api/User")
-app.include_router(routes_cristaleria.router,prefix="/api/Cristaleria")
+app.include_router(routes_cristaleria.router, prefix="/api/Cristaleria")
 app.include_router(routes_reactivo.router, prefix="/api/Reactivos")
+app.include_router(routes_reserva.router, prefix="/api/Reserva")
 app.include_router(routes_data.router, prefix="/api/Data")
 
 

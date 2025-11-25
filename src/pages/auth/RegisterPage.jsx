@@ -1,13 +1,46 @@
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { useState, useEffect } from 'react';
 
 export function RegisterPage() {
     const navigate = useNavigate();
+    const { user, isAdmin } = useAuth();
+    const [roles, setRoles] = useState([]);
+    const [loadingRoles, setLoadingRoles] = useState(true);
+
+    // Redirect if not logged in or not admin
+    if (!user) {
+        navigate('/login');
+        return null;
+    }
+
+    if (!isAdmin()) {
+        toast.error('No tienes permisos para acceder a esta página');
+        navigate('/dashboard');
+        return null;
+    }
+
+    // Fetch roles catalog
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const response = await api.get('/api/Data/Roles');
+                setRoles(response.data);
+            } catch (error) {
+                console.error('Error loading roles', error);
+                toast.error('Error al cargar los roles');
+            } finally {
+                setLoadingRoles(false);
+            }
+        };
+        fetchRoles();
+    }, []);
 
     const formik = useFormik({
         initialValues: {
@@ -15,7 +48,7 @@ export function RegisterPage() {
             correo: '',
             contrasena: '',
             confirmar_contrasena: '',
-            id_rol: 2, // Default to student/user role, adjust as needed
+            id_rol: 2, // Default to student/user role
         },
         validationSchema: Yup.object({
             nombre_completo: Yup.string().required('Requerido'),
@@ -25,18 +58,17 @@ export function RegisterPage() {
                 .oneOf([Yup.ref('contrasena'), null], 'Las contraseñas deben coincidir')
                 .required('Requerido'),
         }),
-        onSubmit: async (values, { setSubmitting }) => {
+        onSubmit: async (values, { setSubmitting, resetForm }) => {
             try {
                 // Prepare data for backend
                 const { confirmar_contrasena, ...dataToSend } = values;
-                // Add active flag if required by backend schema explicitly, though usually backend defaults it
                 const payload = { ...dataToSend, activo: true };
 
-                await api.post('/usuarios/', payload); // Adjust endpoint if needed
-                toast.success('Registro exitoso. Por favor inicia sesión.');
-                navigate('/login');
+                await api.post('/api/User/create', payload);
+                toast.success('Usuario registrado exitosamente');
+                resetForm();
             } catch (error) {
-                toast.error('Error al registrarse. Intente nuevamente.');
+                toast.error('Error al registrar usuario. Intente nuevamente.');
                 console.error(error);
             } finally {
                 setSubmitting(false);
@@ -49,13 +81,10 @@ export function RegisterPage() {
             <div className="max-w-md w-full space-y-8">
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Crear Cuenta
+                        Registrar Nuevo Usuario
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        ¿Ya tienes cuenta?{' '}
-                        <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                            Inicia sesión aquí
-                        </Link>
+                        Solo administradores pueden crear nuevos usuarios
                     </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={formik.handleSubmit}>
@@ -88,15 +117,40 @@ export function RegisterPage() {
                             {...formik.getFieldProps('confirmar_contrasena')}
                             error={formik.touched.confirmar_contrasena && formik.errors.confirmar_contrasena}
                         />
+                        <div>
+                            <label htmlFor="id_rol" className="block text-sm font-medium text-gray-700 mb-1">
+                                Rol
+                            </label>
+                            <select
+                                id="id_rol"
+                                {...formik.getFieldProps('id_rol')}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                disabled={loadingRoles}
+                            >
+                                <option value="">Seleccione un rol</option>
+                                {roles.map((role) => (
+                                    <option key={role.ID_ROL} value={role.ID_ROL}>
+                                        {role.NOMBRE}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
+                    <div className="flex gap-4">
+                        <Button
+                            type="button"
+                            onClick={() => navigate('/dashboard')}
+                            className="flex-1 bg-gray-500 hover:bg-gray-600"
+                        >
+                            Cancelar
+                        </Button>
                         <Button
                             type="submit"
-                            className="w-full"
+                            className="flex-1"
                             disabled={formik.isSubmitting}
                         >
-                            {formik.isSubmitting ? 'Registrando...' : 'Registrarse'}
+                            {formik.isSubmitting ? 'Registrando...' : 'Registrar Usuario'}
                         </Button>
                     </div>
                 </form>

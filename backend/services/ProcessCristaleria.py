@@ -1,5 +1,6 @@
 from sqlalchemy import text
 from bd.Connection import Connection
+from utils.id_generator import generate_id
 
 class ProcessCristaleria:
 
@@ -8,6 +9,9 @@ class ProcessCristaleria:
 
  
     def createCristaleria(self, data):
+        # Generate ID with format C-YYYYMMDDhhmmss
+        id_cristaleria = generate_id("C")
+        
         query = """
             INSERT INTO CRISTALERIA
             (ID_CRISTALERIA, DESCRIPCION, CANT_BUEN_ESTADO, CANT_RAJADO_FUNCIONAL, CANT_DANADO, OBSERVACIONES)
@@ -19,17 +23,17 @@ class ProcessCristaleria:
             conn.execute(
                 text(query),
                 {
-                    "id_cristaleria": data["id_cristaleria"],
+                    "id_cristaleria": id_cristaleria,
                     "descripcion": data["descripcion"],
                     "cant_buen_estado": data["cant_buen_estado"],
                     "cant_rajado_funcional": data["cant_rajado_funcional"],
                     "cant_danado": data["cant_danado"],
-                    "observaciones": data["observaciones"]
+                    "observaciones": data.get("observaciones", "")
                 }
             )
             conn.commit()
 
-        return {"message": "Cristalería creada correctamente"}
+        return {"message": "Cristalería creada correctamente", "id_cristaleria": id_cristaleria}
 
     def getCristaleria(self):
         query = "SELECT * FROM CRISTALERIA"

@@ -4,4 +4,6 @@ pandas
 sqlalchemy
 pyodbc
 pydantic
-
+python-jose[cryptography]
+bcrypt
+python-multipart

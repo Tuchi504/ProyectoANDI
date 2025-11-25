@@ -7,12 +7,12 @@ class Process :
         self.con = Connection().getConnection()
 
     def getRoles(self):
-        table = "ROLES "
+        table = "ROLES"
         result = self.getData(table)
         return result 
     
     def getEstadoReserva(self):
-        table = "ESTADOS_RESERVA "
+        table = "ESTADOS_RESERVA"
         result = self.getData(table)
         return result 
 
@@ -23,7 +23,7 @@ class Process :
         return result 
     
     def getClasificacionReactivo(self):
-        table = "CLASIFICACION_REACTIVOS "
+        table = "CLASIFICACION_REACTIVOS"
         result = self.getData(table)
         return result 
     

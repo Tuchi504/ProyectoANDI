@@ -1,5 +1,6 @@
 from sqlalchemy import text
 from bd.Connection import Connection
+from utils.id_generator import generate_id
 
 class ProcessReserva:
 
@@ -7,6 +8,9 @@ class ProcessReserva:
         self.con = Connection().getConnection()
 
     def createReserva(self, data):
+        # Generate ID with format R-YYYYMMDDhhmmss
+        id_reserva = generate_id("R")
+        
         query = """
             INSERT INTO RESERVAS (ID_RESERVA, DESCRIPCION, FECHA, HORA_INICIO, HORA_FIN, ID_ESTADO)
             VALUES (:id_reserva, :descripcion, :fecha, :hora_inicio, :hora_fin, :id_estado)
@@ -16,17 +20,17 @@ class ProcessReserva:
             conn.execute(
                 text(query),
                 {
-                    "id_reserva": data["id_reserva"],
+                    "id_reserva": id_reserva,
                     "descripcion": data["descripcion"],
                     "fecha": data["fecha"],
                     "hora_inicio": data["hora_inicio"],
                     "hora_fin": data["hora_fin"],
-                    "id_estado": data["id_estado"]
+                    "id_estado": data.get("id_estado", 1)  # Default to estado 1 if not provided
                 }
             )
             conn.commit()
 
-        return {"message": "Reserva creada correctamente"}
+        return {"message": "Reserva creada correctamente", "id_reserva": id_reserva}
 
   
     def getReservas(self):

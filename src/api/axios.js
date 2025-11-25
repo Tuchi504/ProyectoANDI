@@ -26,12 +26,20 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            localStorage.removeItem('token');
-            // Optional: Redirect to login or dispatch a logout action
-            // window.location.href = '/login'; 
+            // Don't redirect if the error is from the login endpoint
+            // This allows the login page to handle incorrect credentials properly
+            const isLoginRequest = error.config?.url?.includes('/api/User/login');
+
+            if (!isLoginRequest) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                // Redirect to login only if not already trying to login
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
 );
+
 
 export default api;

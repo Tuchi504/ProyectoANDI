@@ -1,5 +1,6 @@
 from sqlalchemy import text
 from bd.Connection import Connection
+from utils.id_generator import generate_id
 
 class ProcessReactivo:
 
@@ -7,6 +8,9 @@ class ProcessReactivo:
         self.con = Connection().getConnection()
 
     def createReactivo(self, data):
+        # Generate ID with format RQ-YYYYMMDDhhmmss
+        id_reactivo = generate_id("RQ")
+        
         query = """
             INSERT INTO REACTIVOS
             (ID_REACTIVO, NOMBRE, ID_MARCA, PESO_NETO, PESO_FRASCO, ID_CLASIFICACION, UBICACION, OBSERVACIONES)
@@ -18,19 +22,19 @@ class ProcessReactivo:
             conn.execute(
                 text(query),
                 {
-                    "id_reactivo": data["id_reactivo"],
+                    "id_reactivo": id_reactivo,
                     "nombre": data["nombre"],
                     "id_marca": data["id_marca"],
                     "peso_neto": data["peso_neto"],
                     "peso_frasco": data["peso_frasco"],
                     "id_clasificacion": data["id_clasificacion"],
-                    "ubicacion": data["ubicacion"],
-                    "observaciones": data["observaciones"]
+                    "ubicacion": data.get("ubicacion", ""),
+                    "observaciones": data.get("observaciones", "")
                 }
             )
             conn.commit()
 
-        return {"message": "Reactivo creado correctamente"}
+        return {"message": "Reactivo creado correctamente", "id_reactivo": id_reactivo}
 
     def getReactivos(self):
         query = "SELECT * FROM REACTIVOS"
@@ -38,16 +42,9 @@ class ProcessReactivo:
 
         with self.con.connect() as conn:
             result = conn.execute(text(query))
-            row = result.fetchone()
-
-            while row:
-                item = {}
-
-                for col in row.keys():
-                    item[col] = getattr(row, col)
-
-                reactivos.append(item)
-                row = result.fetchone()
+            
+            for row in result:
+                reactivos.append(dict(row._mapping))
 
         return reactivos
 

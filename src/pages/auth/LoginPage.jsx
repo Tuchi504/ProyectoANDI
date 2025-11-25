@@ -1,7 +1,7 @@
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -26,6 +26,7 @@ export function LoginPage() {
                 navigate('/dashboard');
             } catch (error) {
                 toast.error('Error al iniciar sesión. Verifique sus credenciales.');
+                console.log("No inicia sesión");
                 console.error(error);
             } finally {
                 setSubmitting(false);
@@ -40,12 +41,6 @@ export function LoginPage() {
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                         Iniciar Sesión
                     </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
-                        O{' '}
-                        <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                            regístrate si aún no tienes cuenta
-                        </Link>
-                    </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={formik.handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">

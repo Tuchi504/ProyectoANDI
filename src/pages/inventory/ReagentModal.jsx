@@ -16,8 +16,8 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
         const fetchData = async () => {
             try {
                 const [marcasRes, clasifRes] = await Promise.all([
-                    api.get('/marcas/'),
-                    api.get('/clasificaciones/')
+                    api.get('/api/Data/MarcaReactivo'),
+                    api.get('/api/Data/ClasificacionReactivo')
                 ]);
                 setMarcas(marcasRes.data);
                 setClasificaciones(clasifRes.data);
@@ -106,7 +106,14 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         >
                             <option value="">Seleccione</option>
-                            {marcas.map(m => <option key={m.id_marca} value={m.id_marca}>{m.nombre}</option>)}
+                            {marcas.map(m => (
+                                <option
+                                    key={m.ID_MARCA || m.id_marca}
+                                    value={m.ID_MARCA || m.id_marca}
+                                >
+                                    {m.NOMBRE || m.nombre}
+                                </option>
+                            ))}
                         </select>
                         {formik.touched.id_marca && formik.errors.id_marca && (
                             <p className="mt-1 text-sm text-red-600">{formik.errors.id_marca}</p>
@@ -121,7 +128,14 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         >
                             <option value="">Seleccione</option>
-                            {clasificaciones.map(c => <option key={c.id_clasificacion} value={c.id_clasificacion}>{c.nombre}</option>)}
+                            {clasificaciones.map(c => (
+                                <option
+                                    key={c.ID_CLASIFICACION || c.id_clasificacion}
+                                    value={c.ID_CLASIFICACION || c.id_clasificacion}
+                                >
+                                    {c.NOMBRE || c.nombre}
+                                </option>
+                            ))}
                         </select>
                         {formik.touched.id_clasificacion && formik.errors.id_clasificacion && (
                             <p className="mt-1 text-sm text-red-600">{formik.errors.id_clasificacion}</p>

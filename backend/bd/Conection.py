@@ -5,10 +5,10 @@ class Conection:
     def __init__(self):
   
         self.user = "sa"
-        self.password = "1234"
-        self.server = "SQLSERVER"
+        self.password = ""
+        self.server = ""
         self.driver = "ODBC+Driver+17+for+SQL+Server"
-        self.database = "ANDY"
+        self.database = ""
 
     def getConnection(self):
 

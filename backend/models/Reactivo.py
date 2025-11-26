@@ -7,4 +7,5 @@ class Reactivo(BaseModel):
     peso_frasco: float
     id_clasificacion: int
     ubicacion: str
-    observaciones: str 
+    observaciones: str
+    color: str

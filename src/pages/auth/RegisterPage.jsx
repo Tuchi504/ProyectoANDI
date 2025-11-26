@@ -48,7 +48,7 @@ export function RegisterPage() {
             correo: '',
             contrasena: '',
             confirmar_contrasena: '',
-            id_rol: 2, // Default to student/user role
+            id_rol: '',
         },
         validationSchema: Yup.object({
             nombre_completo: Yup.string().required('Requerido'),
@@ -129,8 +129,8 @@ export function RegisterPage() {
                             >
                                 <option value="">Seleccione un rol</option>
                                 {roles.map((role) => (
-                                    <option key={role.ID_ROL} value={role.ID_ROL}>
-                                        {role.NOMBRE}
+                                    <option key={role.id_rol} value={role.id_rol}>
+                                        {role.nombre}
                                     </option>
                                 ))}
                             </select>

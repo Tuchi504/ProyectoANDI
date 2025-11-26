@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 
-export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
+export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh, readOnly = false }) {
     const isEdit = !!selectedItem;
     const [marcas, setMarcas] = useState([]);
     const [clasificaciones, setClasificaciones] = useState([]);
@@ -25,8 +25,8 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
                 console.error("Error loading selects", error);
             }
         };
-        if (isOpen) fetchData();
-    }, [isOpen]);
+        if (isOpen && !readOnly) fetchData();
+    }, [isOpen, readOnly]);
 
     const formik = useFormik({
         initialValues: {
@@ -37,6 +37,7 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
             id_clasificacion: '',
             ubicacion: '',
             observaciones: '',
+            color: '#FFFFFF',
         },
         validationSchema: Yup.object({
             nombre: Yup.string().required('Requerido'),
@@ -46,14 +47,15 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
             id_clasificacion: Yup.number().required('Requerido'),
             ubicacion: Yup.string(),
             observaciones: Yup.string(),
+            color: Yup.string(),
         }),
         onSubmit: async (values, { setSubmitting }) => {
             try {
                 if (isEdit) {
-                    await api.put(`/reactivos/${selectedItem.id_reactivo}`, values);
+                    await api.put(`/api/Reactivos/update/${selectedItem.id_reactivo}`, values);
                     toast.success('Reactivo actualizado');
                 } else {
-                    await api.post('/reactivos/', values);
+                    await api.post('/api/Reactivos/create', values);
                     toast.success('Reactivo registrado');
                 }
                 onRefresh();
@@ -77,6 +79,7 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
                 id_clasificacion: selectedItem.id_clasificacion,
                 ubicacion: selectedItem.ubicacion || '',
                 observaciones: selectedItem.observaciones || '',
+                color: selectedItem.color || '#FFFFFF',
             });
         } else if (isOpen) {
             formik.resetForm();
@@ -87,92 +90,131 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={isEdit ? 'Editar Reactivo' : 'Nuevo Reactivo'}
+            title={readOnly ? 'Detalles del Reactivo' : (isEdit ? 'Editar Reactivo' : 'Nuevo Reactivo')}
         >
             <form onSubmit={formik.handleSubmit} className="space-y-4">
-                <Input
-                    id="nombre"
-                    label="Nombre"
-                    {...formik.getFieldProps('nombre')}
-                    error={formik.touched.nombre && formik.errors.nombre}
-                />
+                <fieldset disabled={readOnly} className="space-y-4">
+                    <Input
+                        id="nombre"
+                        label="Nombre"
+                        {...formik.getFieldProps('nombre')}
+                        error={formik.touched.nombre && formik.errors.nombre}
+                    />
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
-                        <select
-                            id="id_marca"
-                            {...formik.getFieldProps('id_marca')}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        >
-                            <option value="">Seleccione</option>
-                            {marcas.map(m => (
-                                <option
-                                    key={m.ID_MARCA || m.id_marca}
-                                    value={m.ID_MARCA || m.id_marca}
-                                >
-                                    {m.NOMBRE || m.nombre}
-                                </option>
-                            ))}
-                        </select>
-                        {formik.touched.id_marca && formik.errors.id_marca && (
-                            <p className="mt-1 text-sm text-red-600">{formik.errors.id_marca}</p>
-                        )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
+                            {readOnly ? (
+                                <input
+                                    type="text"
+                                    value={selectedItem?.nombre_marca || ''}
+                                    disabled
+                                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm"
+                                />
+                            ) : (
+                                <>
+                                    <select
+                                        id="id_marca"
+                                        {...formik.getFieldProps('id_marca')}
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    >
+                                        <option value="">Seleccione</option>
+                                        {marcas.map(m => (
+                                            <option
+                                                key={m.id_marca}
+                                                value={m.id_marca}
+                                            >
+                                                {m.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {formik.touched.id_marca && formik.errors.id_marca && (
+                                        <p className="mt-1 text-sm text-red-600">{formik.errors.id_marca}</p>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Clasificación</label>
+                            {readOnly ? (
+                                <input
+                                    type="text"
+                                    value={selectedItem?.nombre_clasificacion || ''}
+                                    disabled
+                                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm"
+                                />
+                            ) : (
+                                <>
+                                    <select
+                                        id="id_clasificacion"
+                                        {...formik.getFieldProps('id_clasificacion')}
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    >
+                                        <option value="">Seleccione</option>
+                                        {clasificaciones.map(c => (
+                                            <option
+                                                key={c.id_clasificacion}
+                                                value={c.id_clasificacion}
+                                            >
+                                                {c.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {formik.touched.id_clasificacion && formik.errors.id_clasificacion && (
+                                        <p className="mt-1 text-sm text-red-600">{formik.errors.id_clasificacion}</p>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Clasificación</label>
-                        <select
-                            id="id_clasificacion"
-                            {...formik.getFieldProps('id_clasificacion')}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        >
-                            <option value="">Seleccione</option>
-                            {clasificaciones.map(c => (
-                                <option
-                                    key={c.ID_CLASIFICACION || c.id_clasificacion}
-                                    value={c.ID_CLASIFICACION || c.id_clasificacion}
-                                >
-                                    {c.NOMBRE || c.nombre}
-                                </option>
-                            ))}
-                        </select>
-                        {formik.touched.id_clasificacion && formik.errors.id_clasificacion && (
-                            <p className="mt-1 text-sm text-red-600">{formik.errors.id_clasificacion}</p>
-                        )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            id="peso_neto"
+                            type="number"
+                            label="Peso Neto"
+                            {...formik.getFieldProps('peso_neto')}
+                            error={formik.touched.peso_neto && formik.errors.peso_neto}
+                        />
+                        <Input
+                            id="peso_frasco"
+                            type="number"
+                            label="Peso Frasco"
+                            {...formik.getFieldProps('peso_frasco')}
+                            error={formik.touched.peso_frasco && formik.errors.peso_frasco}
+                        />
                     </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
                     <Input
-                        id="peso_neto"
-                        type="number"
-                        label="Peso Neto"
-                        {...formik.getFieldProps('peso_neto')}
-                        error={formik.touched.peso_neto && formik.errors.peso_neto}
+                        id="ubicacion"
+                        label="Ubicación"
+                        {...formik.getFieldProps('ubicacion')}
+                        error={formik.touched.ubicacion && formik.errors.ubicacion}
                     />
+
+                    <div>
+                        <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-1">
+                            Color de Etiqueta
+                        </label>
+                        <div className="flex items-center space-x-3">
+                            <input
+                                type="color"
+                                id="color"
+                                {...formik.getFieldProps('color')}
+                                className="h-10 w-20 p-1 rounded border border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+                            />
+                            <span className="text-sm text-gray-500">{formik.values.color}</span>
+                        </div>
+                    </div>
+
                     <Input
-                        id="peso_frasco"
-                        type="number"
-                        label="Peso Frasco"
-                        {...formik.getFieldProps('peso_frasco')}
-                        error={formik.touched.peso_frasco && formik.errors.peso_frasco}
+                        id="observaciones"
+                        label="Observaciones"
+                        {...formik.getFieldProps('observaciones')}
+                        error={formik.touched.observaciones && formik.errors.observaciones}
                     />
-                </div>
-
-                <Input
-                    id="ubicacion"
-                    label="Ubicación"
-                    {...formik.getFieldProps('ubicacion')}
-                    error={formik.touched.ubicacion && formik.errors.ubicacion}
-                />
-
-                <Input
-                    id="observaciones"
-                    label="Observaciones"
-                    {...formik.getFieldProps('observaciones')}
-                    error={formik.touched.observaciones && formik.errors.observaciones}
-                />
+                </fieldset>
 
                 <div className="flex justify-end space-x-3 mt-6">
                     <Button
@@ -180,14 +222,16 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh }) {
                         variant="secondary"
                         onClick={onClose}
                     >
-                        Cancelar
+                        {readOnly ? 'Cerrar' : 'Cancelar'}
                     </Button>
-                    <Button
-                        type="submit"
-                        disabled={formik.isSubmitting}
-                    >
-                        {isEdit ? 'Actualizar' : 'Guardar'}
-                    </Button>
+                    {!readOnly && (
+                        <Button
+                            type="submit"
+                            disabled={formik.isSubmitting}
+                        >
+                            {isEdit ? 'Actualizar' : 'Guardar'}
+                        </Button>
+                    )}
                 </div>
             </form>
         </Modal>

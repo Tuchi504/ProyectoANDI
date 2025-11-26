@@ -13,10 +13,11 @@ export function GlasswarePage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [isReadOnly, setIsReadOnly] = useState(false);
 
     const fetchData = async () => {
         try {
-            const response = await api.get('/cristalerias/');
+            const response = await api.get('api/Cristaleria/list');
             setData(response.data);
             setFilteredData(response.data);
         } catch (error) {
@@ -39,13 +40,20 @@ export function GlasswarePage() {
 
     const handleEdit = (item) => {
         setSelectedItem(item);
+        setIsReadOnly(false);
+        setIsModalOpen(true);
+    };
+
+    const handleView = (item) => {
+        setSelectedItem(item);
+        setIsReadOnly(true);
         setIsModalOpen(true);
     };
 
     const handleDelete = async (item) => {
         if (!window.confirm(`¿Eliminar ${item.descripcion}?`)) return;
         try {
-            await api.delete(`/cristalerias/${item.id_cristaleria}`);
+            await api.delete(`api/Cristaleria/delete/${item.id_cristaleria}`);
             toast.success('Cristalería eliminada');
             fetchData();
         } catch (error) {
@@ -55,10 +63,12 @@ export function GlasswarePage() {
 
     const handleCreate = () => {
         setSelectedItem(null);
+        setIsReadOnly(false);
         setIsModalOpen(true);
     };
 
     const columns = [
+        { key: 'id_cristaleria', header: 'ID' },
         { key: 'descripcion', header: 'Descripción' },
         {
             key: 'total',
@@ -72,7 +82,6 @@ export function GlasswarePage() {
         { key: 'cant_buen_estado', header: 'Buen Estado' },
         { key: 'cant_rajado_funcional', header: 'Rajado Func.' },
         { key: 'cant_danado', header: 'Dañado' },
-        { key: 'observaciones', header: 'Observaciones' },
     ];
 
     return (
@@ -104,6 +113,7 @@ export function GlasswarePage() {
                 data={filteredData}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onView={handleView}
             />
 
             <GlasswareModal
@@ -111,6 +121,7 @@ export function GlasswarePage() {
                 onClose={() => setIsModalOpen(false)}
                 selectedItem={selectedItem}
                 onRefresh={fetchData}
+                readOnly={isReadOnly}
             />
         </div>
     );

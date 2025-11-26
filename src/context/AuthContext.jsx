@@ -15,26 +15,50 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
+            const refreshToken = localStorage.getItem('refresh_token');
             const userData = localStorage.getItem('user');
 
             if (token && userData) {
                 try {
-                    // Decode token to verify it's still valid
                     const decoded = jwtDecode(token);
                     const currentTime = Date.now() / 1000;
 
                     if (decoded.exp < currentTime) {
-                        // Token expired
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        setUser(null);
+                        // Token expired, try to refresh if we have a refresh token
+                        if (refreshToken) {
+                            try {
+                                const response = await api.post('/api/User/refresh', null, {
+                                    params: { refresh_token: refreshToken }
+                                });
+                                const { access_token } = response.data;
+                                localStorage.setItem('token', access_token);
+                                setUser({
+                                    ...JSON.parse(userData),
+                                    token: access_token,
+                                    tokenData: jwtDecode(access_token)
+                                });
+                            } catch (refreshError) {
+                                // Refresh failed
+                                console.error("Refresh failed on load", refreshError);
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('refresh_token');
+                                localStorage.removeItem('user');
+                                setUser(null);
+                            }
+                        } else {
+                            // No refresh token, logout
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('user');
+                            setUser(null);
+                        }
                     } else {
-                        // Token still valid, restore user data
+                        // Token still valid
                         setUser(JSON.parse(userData));
                     }
                 } catch (error) {
                     console.error("Auth check failed", error);
                     localStorage.removeItem('token');
+                    localStorage.removeItem('refresh_token');
                     localStorage.removeItem('user');
                     setUser(null);
                 }
@@ -46,22 +70,19 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            // Call the backend login endpoint
             const response = await api.post('/api/User/login', {
                 correo: email,
                 contrasena: password
             });
 
-            const { access_token, user: userInfo } = response.data;
+            const { access_token, refresh_token, user: userInfo } = response.data;
 
-            // Store token and user data
             localStorage.setItem('token', access_token);
+            localStorage.setItem('refresh_token', refresh_token);
             localStorage.setItem('user', JSON.stringify(userInfo));
 
-            // Decode token for additional info if needed
             const decoded = jwtDecode(access_token);
 
-            // Set user state with all information
             setUser({
                 ...userInfo,
                 token: access_token,
@@ -77,6 +98,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
         setUser(null);
     };

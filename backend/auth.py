@@ -6,11 +6,17 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import text
 from bd.Connection import Connection
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # JWT Configuration
-SECRET_KEY = "tu_clave_secreta_super_segura_cambiala_en_produccion_12345"  # Cambiar en producción
+SECRET_KEY = os.getenv("SECRET_KEY", "tu_clave_secreta_super_segura_cambiala_en_produccion_12345")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 20
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 # HTTP Bearer security scheme
 security = HTTPBearer()
@@ -47,20 +53,13 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
     Crea un token JWT con los datos proporcionados.
-    
-    Args:
-        data: Diccionario con los datos a incluir en el token
-        expires_delta: Tiempo de expiración del token
-    
-    Returns:
-        Token JWT codificado
     """
     to_encode = data.copy()
     
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -68,18 +67,20 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
+def create_refresh_token(data: dict) -> str:
+    """
+    Crea un refresh token con una duración mayor.
+    """
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire, "type": "refresh"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
 def decode_token(token: str) -> dict:
     """
     Decodifica y valida un token JWT.
-    
-    Args:
-        token: Token JWT a decodificar
-    
-    Returns:
-        Payload del token decodificado
-    
-    Raises:
-        HTTPException: Si el token es inválido o ha expirado
     """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -95,15 +96,6 @@ def decode_token(token: str) -> dict:
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
     Dependency para obtener el usuario actual desde el token JWT.
-    
-    Args:
-        credentials: Credenciales HTTP Bearer extraídas del header Authorization
-    
-    Returns:
-        Diccionario con la información del usuario del token
-    
-    Raises:
-        HTTPException: Si el token es inválido o no contiene la información requerida
     """
     token = credentials.credentials
     payload = decode_token(token)
@@ -122,14 +114,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def authenticate_user(correo: str, contrasena: str) -> Optional[dict]:
     """
     Autentica un usuario verificando su correo y contraseña.
-    
-    Args:
-        correo: Email del usuario
-        contrasena: Contraseña en texto plano
-    
-    Returns:
-        Diccionario con la información del usuario si la autenticación es exitosa,
-        None si falla
     """
     con = Connection().getConnection()
     

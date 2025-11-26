@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000', // Adjust if backend is on a different port
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -24,22 +24,53 @@ api.interceptors.request.use(
 // Response interceptor to handle 401 errors (unauthorized)
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response && error.response.status === 401) {
-            // Don't redirect if the error is from the login endpoint
-            // This allows the login page to handle incorrect credentials properly
-            const isLoginRequest = error.config?.url?.includes('/api/User/login');
+    async (error) => {
+        const originalRequest = error.config;
 
-            if (!isLoginRequest) {
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
+            // Don't redirect if the error is from the login endpoint
+            const isLoginRequest = originalRequest.url.includes('/api/User/login');
+
+            if (isLoginRequest) {
+                return Promise.reject(error);
+            }
+
+            originalRequest._retry = true;
+            const refreshToken = localStorage.getItem('refresh_token');
+
+            if (refreshToken) {
+                try {
+                    const response = await api.post('/api/User/refresh', null, {
+                        params: { refresh_token: refreshToken }
+                    });
+
+                    const { access_token } = response.data;
+                    localStorage.setItem('token', access_token);
+
+                    // Update header for the original request
+                    originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
+
+                    // Update default header for future requests
+                    api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
+                    return api(originalRequest);
+                } catch (refreshError) {
+                    // Refresh failed, logout
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                    return Promise.reject(refreshError);
+                }
+            } else {
+                // No refresh token, logout
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                // Redirect to login only if not already trying to login
                 window.location.href = '/login';
             }
         }
         return Promise.reject(error);
     }
 );
-
 
 export default api;

@@ -4,5 +4,6 @@ from typing import Optional
 
 class LoginResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
     user: dict

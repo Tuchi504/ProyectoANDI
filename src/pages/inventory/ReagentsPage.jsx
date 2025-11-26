@@ -13,10 +13,11 @@ export function ReagentsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [isReadOnly, setIsReadOnly] = useState(false);
 
     const fetchData = async () => {
         try {
-            const response = await api.get('/reactivos/');
+            const response = await api.get('/api/Reactivos/list');
             setData(response.data);
             setFilteredData(response.data);
         } catch (error) {
@@ -40,13 +41,20 @@ export function ReagentsPage() {
 
     const handleEdit = (item) => {
         setSelectedItem(item);
+        setIsReadOnly(false);
+        setIsModalOpen(true);
+    };
+
+    const handleView = (item) => {
+        setSelectedItem(item);
+        setIsReadOnly(true);
         setIsModalOpen(true);
     };
 
     const handleDelete = async (item) => {
         if (!window.confirm(`¿Eliminar reactivo ${item.nombre}?`)) return;
         try {
-            await api.delete(`/reactivos/${item.id_reactivo}`);
+            await api.delete(`api/Reactivos/delete/${item.id_reactivo}`);
             toast.success('Reactivo eliminado');
             fetchData();
         } catch (error) {
@@ -56,16 +64,32 @@ export function ReagentsPage() {
 
     const handleCreate = () => {
         setSelectedItem(null);
+        setIsReadOnly(false);
         setIsModalOpen(true);
     };
 
     const columns = [
+        { key: 'id_reactivo', header: 'ID' },
         { key: 'nombre', header: 'Nombre' },
-        { key: 'peso_neto', header: 'Peso Neto' },
-        { key: 'peso_frasco', header: 'Peso Frasco' },
+        { key: 'nombre_marca', header: 'Marca' },
+        {
+            key: 'cantidad',
+            header: 'Cantidad',
+            render: (row) => (row.peso_neto - row.peso_frasco).toFixed(2)
+        },
+        { key: 'nombre_clasificacion', header: 'Clasificación' },
         { key: 'ubicacion', header: 'Ubicación' },
-        { key: 'observaciones', header: 'Observaciones' },
     ];
+
+    const getRowStyle = (row) => {
+        if (row.color) {
+            return {
+                borderLeft: `5px solid ${row.color}`,
+                backgroundColor: `${row.color}10` // 10 is hex for ~6% opacity
+            };
+        }
+        return {};
+    };
 
     return (
         <div className="space-y-6">
@@ -96,6 +120,8 @@ export function ReagentsPage() {
                 data={filteredData}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onView={handleView}
+                getRowStyle={getRowStyle}
             />
 
             <ReagentModal
@@ -103,6 +129,7 @@ export function ReagentsPage() {
                 onClose={() => setIsModalOpen(false)}
                 selectedItem={selectedItem}
                 onRefresh={fetchData}
+                readOnly={isReadOnly}
             />
         </div>
     );

@@ -2,12 +2,11 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { MainLayout } from '../components/layout/MainLayout';
 import { LoginPage } from '../pages/auth/LoginPage';
-import { RegisterPage } from '../pages/auth/RegisterPage';
+import { UsersPage } from '../pages/users/UsersPage';
 import { ChangePasswordPage } from '../pages/auth/ChangePasswordPage';
+import { DashboardHome } from '../pages/dashboard/DashboardHome';
 import { toast } from 'react-toastify';
 
-// Placeholder components for now
-const DashboardHome = () => <div className="text-2xl font-bold text-gray-800">Bienvenido al Sistema de Gestión de Laboratorio</div>;
 import { ReservationsPage } from '../pages/reservations/ReservationsPage';
 import { ReagentsPage } from '../pages/inventory/ReagentsPage';
 import { GlasswarePage } from '../pages/inventory/GlasswarePage';
@@ -45,6 +44,26 @@ const AdminRoute = ({ children }) => {
     return children;
 };
 
+// RoleRoute: allows specific roles to access a route
+const RoleRoute = ({ children, allowedRoles }) => {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <div>Cargando...</div>;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" />;
+    }
+
+    if (!allowedRoles.includes(user.id_rol)) {
+        toast.error('No tienes permisos para acceder a esta página');
+        return <Navigate to="/dashboard" />;
+    }
+
+    return children;
+};
+
 export function AppRouter() {
     return (
         <Routes>
@@ -57,15 +76,15 @@ export function AppRouter() {
             }>
                 <Route index element={<DashboardHome />} />
 
-                {/* Admin-only routes */}
+                {/* Admin and Docente can access reservations */}
                 <Route path="reservations" element={
-                    <AdminRoute>
+                    <RoleRoute allowedRoles={[1, 2]}>
                         <ReservationsPage />
-                    </AdminRoute>
+                    </RoleRoute>
                 } />
                 <Route path="users" element={
                     <AdminRoute>
-                        <RegisterPage />
+                        <UsersPage />
                     </AdminRoute>
                 } />
 

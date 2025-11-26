@@ -26,15 +26,16 @@ class Process :
         table = "CLASIFICACION_REACTIVOS"
         result = self.getData(table)
         return result 
-    
+
     def getData(self, table):
-     query = f"SELECT * FROM {table}"
-     results = []
+        query = f"SELECT * FROM {table}"
+        results = []
 
-     with self.con.connect() as conn:
-        result = conn.execute(text(query))
+        with self.con.connect() as conn:
+            result = conn.execute(text(query))
 
-        for row in result:
-            results.append(dict(row._mapping))
+            for row in result:
+                item = dict(row._mapping)
+                results.append({k.lower(): v for k, v in item.items()})
 
-     return results
+        return results

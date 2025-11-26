@@ -25,7 +25,7 @@ def listReservas(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/update/{id_reserva}")
-def updateReserva(id_reserva: int, r: Reserva, current_user: dict = Depends(get_current_user)):
+def updateReserva(id_reserva: str, r: Reserva, current_user: dict = Depends(get_current_user)):
     """
     Actualiza una reserva. Requiere autenticación JWT.
     """
@@ -34,7 +34,7 @@ def updateReserva(id_reserva: int, r: Reserva, current_user: dict = Depends(get_
 
 
 @router.delete("/delete/{id_reserva}")
-def deleteReserva(id_reserva: int, current_user: dict = Depends(get_current_user)):
+def deleteReserva(id_reserva: str, current_user: dict = Depends(get_current_user)):
     """
     Elimina una reserva. Requiere autenticación JWT.
     """

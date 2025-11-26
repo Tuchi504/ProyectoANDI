@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 
-export function GlasswareModal({ isOpen, onClose, selectedItem, onRefresh }) {
+export function GlasswareModal({ isOpen, onClose, selectedItem, onRefresh, readOnly = false }) {
     const isEdit = !!selectedItem;
 
     const formik = useFormik({
@@ -20,18 +20,18 @@ export function GlasswareModal({ isOpen, onClose, selectedItem, onRefresh }) {
         },
         validationSchema: Yup.object({
             descripcion: Yup.string().required('Requerido'),
-            cant_buen_estado: Yup.number().min(0).required('Requerido'),
-            cant_rajado_funcional: Yup.number().min(0).required('Requerido'),
-            cant_danado: Yup.number().min(0).required('Requerido'),
+            cant_buen_estado: Yup.number().integer('Debe ser un número entero').min(0, 'No puede ser negativo').required('Requerido'),
+            cant_rajado_funcional: Yup.number().integer('Debe ser un número entero').min(0, 'No puede ser negativo').required('Requerido'),
+            cant_danado: Yup.number().integer('Debe ser un número entero').min(0, 'No puede ser negativo').required('Requerido'),
             observaciones: Yup.string(),
         }),
         onSubmit: async (values, { setSubmitting }) => {
             try {
                 if (isEdit) {
-                    await api.put(`/cristalerias/${selectedItem.id_cristaleria}`, values);
+                    await api.put(`api/Cristaleria/update/${selectedItem.id_cristaleria}`, values);
                     toast.success('Cristalería actualizada');
                 } else {
-                    await api.post('/cristalerias/', values);
+                    await api.post('api/Cristaleria/create', values);
                     toast.success('Cristalería registrada');
                 }
                 onRefresh();
@@ -63,46 +63,51 @@ export function GlasswareModal({ isOpen, onClose, selectedItem, onRefresh }) {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={isEdit ? 'Editar Cristalería' : 'Nueva Cristalería'}
+            title={readOnly ? 'Detalles de Cristalería' : (isEdit ? 'Editar Cristalería' : 'Nueva Cristalería')}
         >
             <form onSubmit={formik.handleSubmit} className="space-y-4">
-                <Input
-                    id="descripcion"
-                    label="Descripción"
-                    {...formik.getFieldProps('descripcion')}
-                    error={formik.touched.descripcion && formik.errors.descripcion}
-                />
+                <fieldset disabled={readOnly} className="space-y-4">
+                    <Input
+                        id="descripcion"
+                        label="Descripción"
+                        {...formik.getFieldProps('descripcion')}
+                        error={formik.touched.descripcion && formik.errors.descripcion}
+                    />
 
-                <div className="grid grid-cols-3 gap-4">
-                    <Input
-                        id="cant_buen_estado"
-                        type="number"
-                        label="Buen Estado"
-                        {...formik.getFieldProps('cant_buen_estado')}
-                        error={formik.touched.cant_buen_estado && formik.errors.cant_buen_estado}
-                    />
-                    <Input
-                        id="cant_rajado_funcional"
-                        type="number"
-                        label="Rajado Func."
-                        {...formik.getFieldProps('cant_rajado_funcional')}
-                        error={formik.touched.cant_rajado_funcional && formik.errors.cant_rajado_funcional}
-                    />
-                    <Input
-                        id="cant_danado"
-                        type="number"
-                        label="Dañado"
-                        {...formik.getFieldProps('cant_danado')}
-                        error={formik.touched.cant_danado && formik.errors.cant_danado}
-                    />
-                </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <Input
+                            id="cant_buen_estado"
+                            type="number"
+                            step="1"
+                            label="Buen Estado"
+                            {...formik.getFieldProps('cant_buen_estado')}
+                            error={formik.touched.cant_buen_estado && formik.errors.cant_buen_estado}
+                        />
+                        <Input
+                            id="cant_rajado_funcional"
+                            type="number"
+                            step="1"
+                            label="Rajado Func."
+                            {...formik.getFieldProps('cant_rajado_funcional')}
+                            error={formik.touched.cant_rajado_funcional && formik.errors.cant_rajado_funcional}
+                        />
+                        <Input
+                            id="cant_danado"
+                            type="number"
+                            step="1"
+                            label="Dañado"
+                            {...formik.getFieldProps('cant_danado')}
+                            error={formik.touched.cant_danado && formik.errors.cant_danado}
+                        />
+                    </div>
 
-                <Input
-                    id="observaciones"
-                    label="Observaciones"
-                    {...formik.getFieldProps('observaciones')}
-                    error={formik.touched.observaciones && formik.errors.observaciones}
-                />
+                    <Input
+                        id="observaciones"
+                        label="Observaciones"
+                        {...formik.getFieldProps('observaciones')}
+                        error={formik.touched.observaciones && formik.errors.observaciones}
+                    />
+                </fieldset>
 
                 <div className="flex justify-end space-x-3 mt-6">
                     <Button
@@ -110,14 +115,16 @@ export function GlasswareModal({ isOpen, onClose, selectedItem, onRefresh }) {
                         variant="secondary"
                         onClick={onClose}
                     >
-                        Cancelar
+                        {readOnly ? 'Cerrar' : 'Cancelar'}
                     </Button>
-                    <Button
-                        type="submit"
-                        disabled={formik.isSubmitting}
-                    >
-                        {isEdit ? 'Actualizar' : 'Guardar'}
-                    </Button>
+                    {!readOnly && (
+                        <Button
+                            type="submit"
+                            disabled={formik.isSubmitting}
+                        >
+                            {isEdit ? 'Actualizar' : 'Guardar'}
+                        </Button>
+                    )}
                 </div>
             </form>
         </Modal>

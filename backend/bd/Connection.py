@@ -1,17 +1,20 @@
 from sqlalchemy import create_engine
 import sqlalchemy
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class Connection:
     def __init__(self):
-  
-        self.user = "sa"
-        self.password = "1234"
-        self.server = "localhost"
-        self.driver = "ODBC+Driver+17+for+SQL+Server"
-        self.database = "lab_inventory"
+        self.user = os.getenv("DB_USER", "sa")
+        self.password = os.getenv("DB_PASSWORD", "1234")
+        self.server = os.getenv("DB_SERVER", "localhost")
+        self.driver = os.getenv("DB_DRIVER", "ODBC+Driver+17+for+SQL+Server")
+        self.database = os.getenv("DB_NAME", "lab_inventory")
 
     def getConnection(self):
-
         try:
             connection_str = (
                 f"mssql+pyodbc://{self.user}:{self.password}"
@@ -21,7 +24,6 @@ class Connection:
             )
 
             engine = create_engine(connection_str)
-            #print(engine)
             return engine
 
         except Exception as e:

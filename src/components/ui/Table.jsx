@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 
-export function Table({ columns, data, onEdit, onDelete, actions = true }) {
+export function Table({ columns, data, onEdit, onDelete, onView, actions = true, getRowStyle }) {
     return (
         <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
             <table className="min-w-full divide-y divide-gray-300">
@@ -25,17 +25,30 @@ export function Table({ columns, data, onEdit, onDelete, actions = true }) {
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {data.length > 0 ? (
                         data.map((row, rowIndex) => (
-                            <tr key={rowIndex}>
+                            <tr
+                                key={rowIndex}
+                                style={getRowStyle ? getRowStyle(row) : {}}
+                                className={clsx(getRowStyle ? '' : 'hover:bg-gray-50')}
+                            >
                                 {columns.map((col) => (
                                     <td
                                         key={`${rowIndex}-${col.key}`}
                                         className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
+                                        style={col.style ? col.style(row) : {}}
                                     >
                                         {col.render ? col.render(row) : row[col.key]}
                                     </td>
                                 ))}
                                 {actions && (
                                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                        {onView && (
+                                            <button
+                                                onClick={() => onView(row)}
+                                                className="text-gray-600 hover:text-gray-900 mr-4"
+                                            >
+                                                Ver
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => onEdit(row)}
                                             className="text-blue-600 hover:text-blue-900 mr-4"

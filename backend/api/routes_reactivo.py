@@ -25,7 +25,7 @@ def listReactivos(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/update/{id_reactivo}")
-def updateReactivo(id_reactivo: int, r: Reactivo, current_user: dict = Depends(get_current_user)):
+def updateReactivo(id_reactivo: str, r: Reactivo, current_user: dict = Depends(get_current_user)):
     """
     Actualiza un reactivo. Requiere autenticación JWT.
     """
@@ -34,7 +34,7 @@ def updateReactivo(id_reactivo: int, r: Reactivo, current_user: dict = Depends(g
 
 
 @router.delete("/delete/{id_reactivo}")
-def deleteReactivo(id_reactivo: int, current_user: dict = Depends(get_current_user)):
+def deleteReactivo(id_reactivo: str, current_user: dict = Depends(get_current_user)):
     """
     Elimina un reactivo. Requiere autenticación JWT.
     """

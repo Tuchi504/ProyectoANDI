@@ -5,4 +5,3 @@ class Reserva(BaseModel):
     fecha: str
     hora_inicio: str
     hora_fin: str
-    id_estado: int

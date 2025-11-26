@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { DayPilot } from "@daypilot/daypilot-lite-react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Modal } from '../../components/ui/Modal';
@@ -26,15 +27,14 @@ export function ReservationModal({ isOpen, onClose, selectedRange, selectedEvent
         onSubmit: async (values, { setSubmitting }) => {
             try {
                 const payload = {
-                    ...values,
-                    id_estado: 1, // Default state, e.g., 'Pending' or 'Confirmed'
+                    ...values
                 };
 
                 if (isEdit) {
-                    await api.put(`/reservations/${selectedEvent.id}`, payload);
+                    await api.put(`/api/Reserva/update/${selectedEvent.data.id}`, payload);
                     toast.success('Reserva actualizada');
                 } else {
-                    await api.post('/reservations/', payload);
+                    await api.post('/api/Reserva/create', payload);
                     toast.success('Reserva creada');
                 }
                 onRefresh();
@@ -60,13 +60,16 @@ export function ReservationModal({ isOpen, onClose, selectedRange, selectedEvent
                 });
             } else if (selectedEvent) {
                 // Edit existing reservation
-                // Assuming selectedEvent has these properties or we need to fetch details
-                // DayPilot event object structure might differ, adjusting to standard
+                // DayPilot event object structure: use .data to access raw properties or methods
+                const eventData = selectedEvent.data;
+                const start = new DayPilot.Date(eventData.start);
+                const end = new DayPilot.Date(eventData.end);
+
                 formik.setValues({
-                    descripcion: selectedEvent.text,
-                    fecha: selectedEvent.start.toString("yyyy-MM-dd"),
-                    hora_inicio: selectedEvent.start.toString("HH:mm:ss"),
-                    hora_fin: selectedEvent.end.toString("HH:mm:ss"),
+                    descripcion: eventData.data.descripcion,
+                    fecha: start.toString("yyyy-MM-dd"),
+                    hora_inicio: start.toString("HH:mm:ss"),
+                    hora_fin: end.toString("HH:mm:ss"),
                 });
             }
         }
@@ -76,7 +79,7 @@ export function ReservationModal({ isOpen, onClose, selectedRange, selectedEvent
         if (!window.confirm('¿Estás seguro de eliminar esta reserva?')) return;
 
         try {
-            await api.delete(`/reservations/${selectedEvent.id}`);
+            await api.delete(`/api/Reserva/delete/${selectedEvent.data.id}`);
             toast.success('Reserva eliminada');
             onRefresh();
             onClose();
@@ -93,12 +96,33 @@ export function ReservationModal({ isOpen, onClose, selectedRange, selectedEvent
             title={isEdit ? 'Editar Reserva' : 'Nueva Reserva'}
         >
             <form onSubmit={formik.handleSubmit} className="space-y-4">
+
+                {isEdit && selectedEvent?.data?.id && (
+                    <Input
+                        id="id_reserva"
+                        label="ID de Reserva"
+                        value={selectedEvent.data.id}
+                        readOnly
+                        className="bg-gray-100"
+                    />
+                )}
+
                 <Input
                     id="descripcion"
                     label="Descripción de la Práctica"
                     {...formik.getFieldProps('descripcion')}
                     error={formik.touched.descripcion && formik.errors.descripcion}
                 />
+
+                {isEdit && selectedEvent?.data?.data?.nombre_estado && (
+                    <Input
+                        id="estado"
+                        label="Estado"
+                        value={selectedEvent.data.data.nombre_estado}
+                        readOnly
+                        className="bg-gray-100"
+                    />
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                     <Input

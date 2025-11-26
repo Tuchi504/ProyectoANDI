@@ -25,7 +25,7 @@ def listCristaleria(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/update/{id_cristaleria}")
-def updateCristaleria(id_cristaleria: int, c: Cristaleria, current_user: dict = Depends(get_current_user)):
+def updateCristaleria(id_cristaleria: str, c: Cristaleria, current_user: dict = Depends(get_current_user)):
     """
     Actualiza un item de cristalería. Requiere autenticación JWT.
     """
@@ -34,7 +34,7 @@ def updateCristaleria(id_cristaleria: int, c: Cristaleria, current_user: dict = 
 
 
 @router.delete("/delete/{id_cristaleria}")
-def deleteCristaleria(id_cristaleria: int, current_user: dict = Depends(get_current_user)):
+def deleteCristaleria(id_cristaleria: str, current_user: dict = Depends(get_current_user)):
     """
     Elimina un item de cristalería. Requiere autenticación JWT.
     """

@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from models.User import Usuario
+from models.UserUpdate import UserUpdate
 from models.LoginRequest import LoginRequest
 from models.LoginResponse import LoginResponse
 from models.ChangePasswordRequest import ChangePasswordRequest
 from services.ProcessUser import ProcessUser
-from auth import get_current_user, authenticate_user, create_access_token, get_password_hash, verify_password
+from auth import get_current_user, authenticate_user, create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
 
 router = APIRouter()
 
@@ -30,6 +31,7 @@ def login(login_data: LoginRequest):
         "id_rol": user["ID_ROL"]
     }
     access_token = create_access_token(data=token_data)
+    refresh_token = create_refresh_token(data=token_data)
     
     # Preparar información del usuario para retornar (sin la contraseña)
     user_info = {
@@ -42,9 +44,42 @@ def login(login_data: LoginRequest):
     
     return LoginResponse(
         access_token=access_token,
+        refresh_token=refresh_token,
         token_type="bearer",
         user=user_info
     )
+
+
+@router.post("/refresh")
+def refresh_token(refresh_token: str):
+    """
+    Genera un nuevo access token usando un refresh token válido.
+    """
+    try:
+        payload = decode_token(refresh_token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token inválido",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Crear nuevo access token
+        token_data = {
+            "user_id": payload["user_id"],
+            "correo": payload["correo"],
+            "id_rol": payload["id_rol"]
+        }
+        new_access_token = create_access_token(data=token_data)
+        
+        return {"access_token": new_access_token, "token_type": "bearer"}
+        
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token inválido o expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 @router.post("/create")
@@ -69,14 +104,12 @@ def list_users(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/update/{id_usuario}")
-def update_user(id_usuario: int, user: Usuario, current_user: dict = Depends(get_current_user)):
+def update_user(id_usuario: int, user: UserUpdate, current_user: dict = Depends(get_current_user)):
     """
-    Actualiza un usuario. Requiere autenticación JWT.
+    Actualiza un usuario (sin modificar contraseña). Requiere autenticación JWT.
     """
     p = ProcessUser()
-    # Hash de la contraseña si se está actualizando
     user_data = user.model_dump()
-    user_data["contrasena"] = get_password_hash(user_data["contrasena"])
     return p.updateUser(id_usuario, user_data)
 
 

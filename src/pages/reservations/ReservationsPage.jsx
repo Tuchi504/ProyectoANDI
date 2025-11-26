@@ -35,19 +35,27 @@ export function ReservationsPage() {
         try {
             // Adjust endpoint to fetch reservations for the visible range if possible
             // For now fetching all or a subset
-            const response = await api.get('/reservations/');
+            const response = await api.get('/api/Reserva/list');
 
             // Transform backend data to DayPilot format
             // Backend: { id_reserva, descripcion, fecha, hora_inicio, hora_fin, ... }
             // DayPilot: { id, text, start, end }
-            const mappedEvents = response.data.map(res => ({
-                id: res.id_reserva,
-                text: res.descripcion,
-                start: `${res.fecha}T${res.hora_inicio}`,
-                end: `${res.fecha}T${res.hora_fin}`,
-                backColor: "#3b82f6", // Blue-500
-                fontColor: "#ffffff"
-            }));
+            const mappedEvents = response.data.map(res => {
+                let backColor = "#3b82f6"; // Default Blue (Programada)
+                if (res.id_estado === 2) backColor = "#10b981"; // Green (En Curso)
+                if (res.id_estado === 3) backColor = "#6b7280"; // Gray (Finalizada)
+
+                return {
+                    id: res.id_reserva,
+                    text: `${res.descripcion} (${res.nombre_estado})`,
+                    start: `${res.fecha}T${res.hora_inicio}`,
+                    end: `${res.fecha}T${res.hora_fin}`,
+                    backColor: backColor,
+                    fontColor: "#ffffff",
+                    // Pass all original data to be used in modal
+                    data: res
+                };
+            });
 
             setEvents(mappedEvents);
         } catch (error) {

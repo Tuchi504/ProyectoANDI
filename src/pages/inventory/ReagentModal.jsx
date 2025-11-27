@@ -16,8 +16,8 @@ export function ReagentModal({ isOpen, onClose, selectedItem, onRefresh, readOnl
         const fetchData = async () => {
             try {
                 const [marcasRes, clasifRes] = await Promise.all([
-                    api.get('/api/Data/MarcaReactivo'),
-                    api.get('/api/Data/ClasificacionReactivo')
+                    api.get('/api/Dashboard/MarcaReactivo'),
+                    api.get('/api/Dashboard/ClasificacionReactivo')
                 ]);
                 setMarcas(marcasRes.data);
                 setClasificaciones(clasifRes.data);
